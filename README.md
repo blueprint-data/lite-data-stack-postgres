@@ -16,13 +16,28 @@ A Lite Data Stack template powered by Meltano (extraction) and dbt (transformati
 Create a `.env` file in the root directory (or start from `.env.example`):
 
 ```bash
-# Database Configuration (for PostgreSQL)
+# Database Configuration (PostgreSQL)
+# Use the host only (no https:// or postgresql://)
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=your_database
 DB_USER=your_username
 DB_PASSWORD=your_password
+
+# Used to name dev schemas: SANDBOX_<USER>
 DBT_USER=yourname
+
+# Optional: start date for the Rick & Morty tap
+TAP_RICKANDMORTY_START_DATE=2020-01-01
+```
+
+Supabase users: use the values from Settings → Database → Connection string.
+If you use the Transaction pooler, your host/port/user will look like:
+
+```bash
+DB_HOST=aws-1-us-east-1.pooler.supabase.com
+DB_PORT=6543
+DB_USER=postgres.<project-ref>
 ```
 
 ### Setup
@@ -57,7 +72,6 @@ DBT_USER=yourname
    ```bash
    cd transform
    cp profiles.yml.example profiles.yml
-   # Edit profiles.yml with your database credentials
    ```
 
 4. **Set DBT_USER for development (if not set in `.env`)**:
@@ -68,25 +82,58 @@ DBT_USER=yourname
 
 ### Running
 
-1. **Review the extractor setup** in `extraction/meltano.yml`:
+1. **Load environment variables**:
+
+   ```bash
+   set -a; source .env; set +a
+   ```
+
+2. **Review the extractor setup** in `extraction/meltano.yml`:
    - `tap-rickandmorty` pulls from the public API
    - `target-postgres` loads into the `raw` schema
 
-2. **Run Extraction**:
+3. **Run Extraction**:
 
    ```bash
    cd extraction
+   ./scripts/setup-local.sh
+   source venv/bin/activate 
    meltano run tap-rickandmorty target-postgres
    ```
 
-3. **Run Transformation**:
+4. **Run Transformation (dev)**:
 
    ```bash
    cd transform
+   ./scripts/setup-local.sh
+   source venv/bin/activate 
    dbt deps
    dbt run
    dbt test
    ```
+
+5. **Run Transformation (prod schemas)**:
+
+   ```bash
+   dbt run --target prod
+   dbt test --target prod
+   ```
+
+### Docs
+
+Generate and serve dbt docs for the active target:
+
+```bash
+dbt docs generate
+dbt docs serve
+```
+
+For prod schemas:
+
+```bash
+dbt docs generate --target prod
+dbt docs serve --target prod
+```
 
 ## Project Structure
 
@@ -135,21 +182,19 @@ This template already includes:
 
 #### Environments
 
-- **Prod**: Uses configured schema names
-- **Dev**: Uses sandbox datasets (`SANDBOX_<USER>`)
-- **CI**: Uses sandbox datasets with a run identifier (`SANDBOX_CI_PR_<NUMBER>`)
+- **Prod/CI**: Uses configured schema names (`stg`, `int`, `marts`)
+- **Dev**: Uses sandbox schemas (`SANDBOX_<USER>`)
 
 #### Sandbox Strategy
 
-The project uses sandbox datasets for development and CI:
+The project uses sandbox schemas for development:
 
-- **Local development**: Each developer gets `SANDBOX_<USER>` dataset
-- **PR CI**: Each PR gets `SANDBOX_CI_PR_<NUMBER>` dataset
+- **Local development**: Each developer gets `SANDBOX_<USER>` schema
 - **Prod**: Direct schema access with `persist_docs` enabled
 
 #### Defer Support
 
-When running with `--defer` flag, dbt will use production datasets for unmodified models:
+When running with `--defer` flag, dbt will use production schemas for unmodified models:
 
 ```bash
 dbt build --defer --state prod-artifacts --select state:modified+
@@ -174,7 +219,7 @@ You'll need to configure database credentials if you point the workflow at an ex
 
 1. Install dependencies via setup scripts
 2. Set `DBT_USER` environment variable
-3. Work in your sandbox dataset: `SANDBOX_<USER>`
+3. Work in your sandbox schema: `SANDBOX_<USER>`
 4. Test changes before committing
 
 ### Using Defer
@@ -191,7 +236,7 @@ dbt build --defer --state prod-artifacts --select state:modified+
 
 ### Best Practices
 
-- Always run in sandbox datasets for development
+- Always run in sandbox schemas for development
 - Use `--defer` to test against production data
 - Test in PR before merging to main
 - Keep staging models as views for easy iteration
@@ -224,9 +269,9 @@ For development mode, ensure `DBT_USER` is set:
 export DBT_USER="yourname"
 ```
 
-### Sandbox dataset issues
+### Sandbox schema issues
 
-If sandbox dataset doesn't exist:
+If the sandbox schema doesn't exist:
 
 - Local: Check database permissions
 - CI: Check cloud provider authentication
@@ -250,9 +295,9 @@ Ensure:
 
 1. Create a feature branch
 2. Make your changes
-3. Test in your sandbox dataset
+3. Test in your sandbox schema
 4. Submit a pull request
-5. CI will run in PR-specific sandbox dataset
+5. Run the pipeline end to end before merging
 
 ## License
 

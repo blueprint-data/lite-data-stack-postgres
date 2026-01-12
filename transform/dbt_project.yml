@@ -1,8 +1,8 @@
-name: 'lite-data-stack-postgres'
+name: 'lite_data_stack_postgres'
 version: '1.0.0'
 config-version: 2
 
-profile: 'lite-data-stack-postgres'
+profile: 'lite_data_stack_postgres'
 
 model-paths: ['models']
 analysis-paths: ['analyses']
@@ -23,13 +23,15 @@ on-run-start:
     {% endif %}
 
 models:
-  lite-data-stack-postgres:
+  lite_data_stack_postgres:
     +persist_docs:
       relation: true
       columns: true
+    intermediate:
+      +schema: int
     production:
       marts:
         +schema: marts
     staging:
-      +schema: staging
+      +schema: stg
       +materialized: view
