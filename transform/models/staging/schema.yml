@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: stg_characters
+    description: Cleaned character attributes from the Rick and Morty API.
+    columns:
+      - name: character_id
+        tests:
+          - not_null
+          - unique
+
+  - name: stg_episodes
+    description: Cleaned episode attributes from the Rick and Morty API.
+    columns:
+      - name: episode_id
+        tests:
+          - not_null
+          - unique
+
+  - name: stg_locations
+    description: Cleaned location attributes from the Rick and Morty API.
+    columns:
+      - name: location_id
+        tests:
+          - not_null
+          - unique

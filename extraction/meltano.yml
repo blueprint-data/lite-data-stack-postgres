@@ -1,0 +1,41 @@
+version: 1
+default_environment: dev
+
+project_id: lite-data-stack-postgres
+
+send_anonymous_usage_stats: false
+
+plugins:
+  extractors:
+    - name: tap-rickandmorty
+      namespace: tap_rickandmorty
+      pip_url: git+https://github.com/MeltanoLabs/tap-rickandmorty.git
+
+  loaders:
+    - name: target-postgres
+      namespace: target_postgres
+      variant: transferwise
+      pip_url: pipelinewise-target-postgres
+      config:
+        host: ${DB_HOST}
+        port: ${DB_PORT}
+        user: ${DB_USER}
+        password: ${DB_PASSWORD}
+        dbname: ${DB_NAME}
+        schema: raw
+        add_record_metadata: true
+
+jobs:
+  - name: rick_and_morty_to_postgres
+    tasks:
+      - tap-rickandmorty target-postgres
+
+schedules:
+  - name: rick-and-morty-daily
+    interval: "@daily"
+    job: rick_and_morty_to_postgres
+
+environments:
+  - name: dev
+  - name: ci
+  - name: prod

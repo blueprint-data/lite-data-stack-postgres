@@ -1,0 +1,34 @@
+lite-data-stack-postgres:
+
+  outputs:
+    dev:
+      type: postgres
+      host: $DB_HOST
+      port: $DB_PORT
+      user: $DB_USER
+      password: $DB_PASSWORD
+      dbname: $DB_NAME
+      schema: analytics
+      threads: 4
+
+    ci:
+      type: postgres
+      host: $DB_HOST
+      port: $DB_PORT
+      user: $DB_USER
+      password: $DB_PASSWORD
+      dbname: $DB_NAME
+      schema: analytics_ci
+      threads: 4
+
+    prod:
+      type: postgres
+      host: $DB_HOST
+      port: $DB_PORT
+      user: $DB_USER
+      password: $DB_PASSWORD
+      dbname: $DB_NAME
+      schema: analytics
+      threads: 4
+
+  target: dev

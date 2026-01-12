@@ -1,0 +1,69 @@
+name: data-pipeline
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * *'
+
+jobs:
+  run-end-to-end:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: pipeline
+          POSTGRES_PASSWORD: pipeline
+          POSTGRES_DB: pipeline
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U pipeline"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: pipeline
+      DB_USER: pipeline
+      DB_PASSWORD: pipeline
+      DBT_USER: github_actions
+      CI: true
+      DBT_CI_PR_NUMBER: scheduled
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip uv
+          uv pip install -e ".[extraction,transform]"
+
+      - name: Install Meltano plugins
+        working-directory: extraction
+        run: |
+          meltano install
+
+      - name: Run extraction
+        working-directory: extraction
+        run: |
+          meltano run tap-rickandmorty target-postgres
+
+      - name: Prepare dbt profiles
+        run: |
+          cp transform/profiles.yml.example transform/profiles.yml
+
+      - name: Run dbt models and tests
+        working-directory: transform
+        env:
+          DBT_PROFILES_DIR: ${{ github.workspace }}/transform
+        run: |
+          dbt deps
+          dbt run
+          dbt test
