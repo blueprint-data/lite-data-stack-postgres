@@ -240,6 +240,10 @@ dbt build --defer --state prod-artifacts --select state:modified+
    - Scheduled runs (configurable cron)
    - Manual dispatch
    - Runs extraction followed by transformation
+2. **dbt CD + Docs** (`.github/workflows/dbt-cd-docs.yml`)
+   - PR: `dbt parse` validation
+   - Push to `main`: `dbt run --target prod`, `dbt test --target prod`
+   - Publishes dbt docs to GitHub Pages
 
 ### Setting Up CI/CD
 
@@ -252,6 +256,9 @@ The workflow expects an external Postgres instance and reads credentials from Gi
 The workflow maps these `DB_*` secrets into the `TARGET_POSTGRES_*` variables that Meltano uses.
 
 If your database restricts inbound connections, allow GitHub Actions runner IPs for the region or use a publicly reachable endpoint.
+
+To publish dbt docs, enable GitHub Pages with **Source: GitHub Actions** in the
+repository settings.
 
 ## Development
 
