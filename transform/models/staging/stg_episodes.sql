@@ -1,15 +1,15 @@
 -- CI smoke test: no data change
-with source as (
-    select *
-    from {{ source('rick_and_morty', 'episodes') }}
+WITH source AS (
+    SELECT *
+    FROM {{ source('rick_and_morty', 'episodes') }}
 )
 
-select
-    id::int as episode_id,
+SELECT
+    id::int AS episode_id,
     name,
     air_date,
-    episode as episode_code,
-    url as episode_url,
-    created::timestamptz as created_at,
-    coalesce(jsonb_array_length(characters::jsonb), 0) as character_count
-from source
+    episode AS episode_code,
+    url AS episode_url,
+    created::timestamptz AS created_at,
+    COALESCE(jsonb_array_length(characters::jsonb), 0) AS character_count
+FROM source
