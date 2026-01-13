@@ -6,14 +6,14 @@ send_anonymous_usage_stats: false
 
 plugins:
   extractors:
-  - name: tap-rest-api-msdk
-    variant: widen
-    pip_url: tap-rest-api-msdk
+    - name: tap-rest-api-msdk
+      variant: widen
+      pip_url: tap-rest-api-msdk
 
-# Rick & Morty extractor 
-  - name: tap-rest-rickandmorty
-    inherit_from: tap-rest-api-msdk
-    config:
+    # Rick & Morty extractor
+    - name: tap-rest-rickandmorty
+      inherit_from: tap-rest-api-msdk
+      config:
         api_url: https://rickandmortyapi.com/api
         pagination_request_style: jsonpath_paginator
         next_page_token_path: "$.info.next.`split(=, 1, 1)`"
@@ -36,20 +36,23 @@ plugins:
             primary_keys: [id]
             next_page_token_path: "$.info.next"
 
-
-
-    
   loaders:
-  - name: target-postgres
-    variant: meltanolabs
-    pip_url: meltanolabs-target-postgres
-    config:
-      default_target_schema: ${MELTANO_ENVIRONMENT}_${MELTANO_EXTRACTOR_NAMESPACE}
-  - name: target-jsonl
-    variant: andyh1203
-    pip_url: target-jsonl
+    - name: target-postgres
+      variant: meltanolabs
+      pip_url: meltanolabs-target-postgres
+      config:
+        host: ${TARGET_POSTGRES_HOST}
+        port: ${TARGET_POSTGRES_PORT}
+        user: ${TARGET_POSTGRES_USER}
+        password: ${TARGET_POSTGRES_PASSWORD}
+        dbname: ${TARGET_POSTGRES_DATABASE}
+        ssl: true
+        default_target_schema: ${MELTANO_ENVIRONMENT}_${MELTANO_EXTRACTOR_NAMESPACE}
+    - name: target-jsonl
+      variant: andyh1203
+      pip_url: target-jsonl
 
 environments:
-- name: dev
-- name: ci
-- name: prod
+  - name: dev
+  - name: ci
+  - name: prod

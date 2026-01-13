@@ -45,7 +45,7 @@ jobs:
       - name: Run extraction
         working-directory: extraction
         run: |
-          meltano run evironment prod tap-rickandmorty target-postgres
+          meltano --environment=prod run tap-rest-rickandmorty target-postgres
 
       - name: Prepare dbt profiles
         run: |

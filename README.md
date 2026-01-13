@@ -28,19 +28,17 @@ DB_SSLMODE=require
 # Used to name dev schemas: SANDBOX_<USER>
 DBT_USER=yourname
 
-# Optional: start date for the Rick & Morty tap
-TAP_RICKANDMORTY_START_DATE=2020-01-01
-
 # Meltano loader (target-postgres)
 # These can mirror DB_* or be set in extraction/.env
 TARGET_POSTGRES_HOST=localhost
 TARGET_POSTGRES_PORT=5432
-TARGET_POSTGRES_DBNAME=your_database
+TARGET_POSTGRES_DATABASE=your_database
 TARGET_POSTGRES_USER=your_username
 TARGET_POSTGRES_PASSWORD=your_password
 ```
 
 Supabase users: use the values from Settings → Database → Connection string.
+Session pooler uses port 5432, and Transaction pooler uses port 6543.
 If you use the Transaction pooler, your host/port/user will look like:
 
 ```bash
@@ -105,16 +103,23 @@ set -a; source .env; set +a
    ```
 
 2. **Review the extractor setup** in `extraction/meltano.yml`:
-   - `tap-rickandmorty` pulls from the public API
-   - `target-postgres` loads into the `raw` schema
+   - `tap-rest-rickandmorty` pulls from the public API
+   - `target-postgres` loads into `${MELTANO_ENVIRONMENT}_${MELTANO_EXTRACTOR_NAMESPACE}`
+     (for example: `dev_tap_rest_rickandmorty`, `prod_tap_rest_rickandmorty`)
 
 3. **Run Extraction**:
 
    ```bash
    cd extraction
+   set -a; source .env; set +a
    ./scripts/setup-local.sh
    source venv/bin/activate 
-   meltano run tap-rickandmorty target-postgres
+   meltano run tap-rest-rickandmorty target-postgres
+   ```
+   To run against prod schemas:
+
+   ```bash
+   meltano --environment=prod run tap-rest-rickandmorty target-postgres
    ```
 
 4. **Run Transformation (dev)**:
@@ -156,7 +161,7 @@ dbt docs serve --target prod
 ```
 lite-data-stack-postgres/
 ├── extraction/                  # Meltano project for data extraction
-│   ├── meltano.yml              # Rick & Morty tap + Postgres target
+│   ├── meltano.yml              # Rick & Morty REST tap + Postgres target
 │   ├── scripts/
 │   │   └── setup-local.sh       # Helper script for setup
 │   └── venv/                    # Python virtual environment
@@ -190,15 +195,15 @@ lite-data-stack-postgres/
 
 This template already includes:
 
-- `tap-rickandmorty` as the extractor
+- `tap-rest-rickandmorty` as the extractor
 - `target-postgres` as the loader
-- A daily schedule for the pipeline
+- Loads data into `${MELTANO_ENVIRONMENT}_${MELTANO_EXTRACTOR_NAMESPACE}`
 
 ### Transform (dbt)
 
 #### Environments
 
-- **Prod/CI**: Uses configured schema names (`stg`, `int`, `marts`)
+- **Prod/CI**: Uses configured schema names (`stg`, `marts`; `int` if added)
 - **Dev**: Uses sandbox schemas (`SANDBOX_<USER>`)
 
 #### Sandbox Strategy
@@ -232,6 +237,8 @@ The workflow expects an external Postgres instance and reads credentials from Gi
 - `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
 - `DBT_USER` (used for sandbox schema naming in dev targets)
 - `DB_SSLMODE` (for example: `require` for Supabase)
+
+The workflow maps these `DB_*` secrets into the `TARGET_POSTGRES_*` variables that Meltano uses.
 
 If your database restricts inbound connections, allow GitHub Actions runner IPs for the region or use a publicly reachable endpoint.
 
@@ -280,6 +287,10 @@ cd transform
 dbt test
 dbt run
 ```
+
+### Meltano target-postgres config missing
+
+If you see "Required key is missing from config", ensure `TARGET_POSTGRES_*` are set or load `extraction/.env` before running Meltano.
 
 ## Troubleshooting
 
