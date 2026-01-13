@@ -244,6 +244,10 @@ dbt build --defer --state prod-artifacts --select state:modified+
    - PR: `dbt parse` validation
    - Push to `main`: `dbt run --target prod`, `dbt test --target prod`
    - Publishes dbt docs to GitHub Pages
+3. **dbt PR CI** (`.github/workflows/dbt-pr-ci.yml`)
+   - Lints changed models with SQLFluff (dbt templater)
+   - Runs `dbt build` in a sandbox schema
+   - Uses the production `manifest.json` for slim CI when available
 
 ### Setting Up CI/CD
 
@@ -259,6 +263,10 @@ If your database restricts inbound connections, allow GitHub Actions runner IPs 
 
 To publish dbt docs, enable GitHub Pages with **Source: GitHub Actions** in the
 repository settings.
+
+The PR workflow pulls the production manifest from GitHub Pages at:
+`https://<owner>.github.io/<repo>/manifest.json`. Override this by setting
+`DBT_MANIFEST_URL` as a repository secret if you use a custom domain.
 
 ## Development
 
