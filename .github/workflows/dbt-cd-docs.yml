@@ -68,6 +68,7 @@ jobs:
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DB_SSLMODE: ${{ secrets.DB_SSLMODE }}
       DBT_USER: ${{ secrets.DBT_USER }}
+      PAGES_ARTIFACT_NAME: github-pages-${{ github.run_attempt }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -109,7 +110,10 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: transform/target
+          name: ${{ env.PAGES_ARTIFACT_NAME }}
 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: ${{ env.PAGES_ARTIFACT_NAME }}
