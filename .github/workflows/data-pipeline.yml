@@ -52,5 +52,5 @@ jobs:
           DBT_PROFILES_DIR: ${{ github.workspace }}/transform
         run: |
           dbt deps
-          dbt run
-          dbt test
+          dbt run --target prod
+          dbt test --target prod
