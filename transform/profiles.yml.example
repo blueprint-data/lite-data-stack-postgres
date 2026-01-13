@@ -9,7 +9,7 @@ lite_data_stack_postgres:
       password: "{{ env_var('DB_PASSWORD') }}"
       dbname: "{{ env_var('DB_NAME') }}"
       schema: analytics
-      sslmode: require
+      sslmode: "{{ env_var('DB_SSLMODE', 'require') }}"
       threads: 4
 
     ci:
@@ -20,7 +20,7 @@ lite_data_stack_postgres:
       password: "{{ env_var('DB_PASSWORD') }}"
       dbname: "{{ env_var('DB_NAME') }}"
       schema: analytics_ci
-      sslmode: require
+      sslmode: "{{ env_var('DB_SSLMODE', 'require') }}"
       threads: 4
 
     prod:
@@ -31,7 +31,7 @@ lite_data_stack_postgres:
       password: "{{ env_var('DB_PASSWORD') }}"
       dbname: "{{ env_var('DB_NAME') }}"
       schema: analytics
-      sslmode: require
+      sslmode: "{{ env_var('DB_SSLMODE', 'require') }}"
       threads: 4
 
   target: dev
