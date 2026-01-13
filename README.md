@@ -23,12 +23,21 @@ DB_PORT=5432
 DB_NAME=your_database
 DB_USER=your_username
 DB_PASSWORD=your_password
+DB_SSLMODE=require
 
 # Used to name dev schemas: SANDBOX_<USER>
 DBT_USER=yourname
 
 # Optional: start date for the Rick & Morty tap
 TAP_RICKANDMORTY_START_DATE=2020-01-01
+
+# Meltano loader (target-postgres)
+# These can mirror DB_* or be set in extraction/.env
+TARGET_POSTGRES_HOST=localhost
+TARGET_POSTGRES_PORT=5432
+TARGET_POSTGRES_DBNAME=your_database
+TARGET_POSTGRES_USER=your_username
+TARGET_POSTGRES_PASSWORD=your_password
 ```
 
 Supabase users: use the values from Settings → Database → Connection string.
@@ -38,6 +47,13 @@ If you use the Transaction pooler, your host/port/user will look like:
 DB_HOST=aws-1-us-east-1.pooler.supabase.com
 DB_PORT=6543
 DB_USER=postgres.<project-ref>
+```
+
+For local extraction, you can copy `extraction/.env.example` to `extraction/.env` and load it with:
+
+```bash
+cd extraction
+set -a; source .env; set +a
 ```
 
 ### Setup

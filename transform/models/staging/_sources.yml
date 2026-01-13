@@ -2,7 +2,7 @@ version: 2
 
 sources:
   - name: rick_and_morty
-    schema: raw
+    schema: prod_tap_rest_rickandmorty
     tables:
       - name: characters
         description: Raw character records from the Rick and Morty API.

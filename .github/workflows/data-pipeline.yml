@@ -18,7 +18,7 @@ jobs:
       DB_SSLMODE: ${{ secrets.DB_SSLMODE }}
       TARGET_POSTGRES_HOST: ${{ secrets.DB_HOST }}
       TARGET_POSTGRES_PORT: ${{ secrets.DB_PORT }}
-      TARGET_POSTGRES_DBNAME: ${{ secrets.DB_NAME }}
+      TARGET_POSTGRES_DATABASE: ${{ secrets.DB_NAME }}
       TARGET_POSTGRES_USER: ${{ secrets.DB_USER }}
       TARGET_POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
       CI: true
@@ -45,7 +45,7 @@ jobs:
       - name: Run extraction
         working-directory: extraction
         run: |
-          meltano run tap-rickandmorty target-postgres
+          meltano run evironment prod tap-rickandmorty target-postgres
 
       - name: Prepare dbt profiles
         run: |

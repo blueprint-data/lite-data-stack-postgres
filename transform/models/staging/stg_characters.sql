@@ -11,8 +11,10 @@ renamed as (
         species,
         nullif(type, '') as type,
         gender,
-        origin ->> 'name' as origin_name,
-        location ->> 'name' as location_name,
+        origin_name,
+        origin_url,
+        location_name,
+        location_url,
         image as image_url,
         url as character_url,
         created::timestamptz as created_at

@@ -1,13 +1,15 @@
 .DS_Store
 .env
+extraction/.env
 
 __pycache__/
 *.pyc
 *.egg-info/
-
+extraction/.env
 extraction/.meltano/
 extraction/venv/
-
+extraction/output/
+extraction/plugins/
 transform/venv/
 transform/.dbt/
 transform/dbt_packages/
