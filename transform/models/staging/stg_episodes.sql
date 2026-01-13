@@ -11,5 +11,5 @@ SELECT
     episode AS episode_code,
     url AS episode_url,
     created::timestamptz AS created_at,
-    COALESCE(jsonb_array_length(characters::jsonb), 0) AS character_count
+    COALESCE(JSONB_ARRAY_LENGTH(characters::jsonb), 0) AS character_count
 FROM source
