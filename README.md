@@ -16,7 +16,7 @@ A Lite Data Stack template powered by Meltano (extraction) and dbt (transformati
 Create a `.env` file in the root directory (or start from `.env.example`):
 
 ```bash
-# Database Configuration (PostgreSQL)
+# Database Configuration ( PostgreSQL )
 # Use the host only (no https:// or postgresql://)
 DB_HOST=localhost
 DB_PORT=5432
