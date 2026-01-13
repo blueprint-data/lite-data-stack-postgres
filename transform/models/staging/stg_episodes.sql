@@ -1,3 +1,4 @@
+-- CI smoke test: no data change
 with source as (
     select *
     from {{ source('rick_and_morty', 'episodes') }}
