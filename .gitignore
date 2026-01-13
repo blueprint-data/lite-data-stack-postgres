@@ -1,7 +1,8 @@
 .DS_Store
 .env
 extraction/.env
-
+transform/.env
+transform/dbt_internal_packages/
 __pycache__/
 *.pyc
 *.egg-info/

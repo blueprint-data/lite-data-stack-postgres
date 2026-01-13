@@ -16,6 +16,14 @@ models:
           - not_null
           - unique
 
+  - name: mart_episode_character_counts
+    description: Episode character counts for quick lookups.
+    columns:
+      - name: episode_id
+        tests:
+          - not_null
+          - unique
+
   - name: mart_location_summary
     description: Location attributes with resident counts.
     columns:
