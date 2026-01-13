@@ -37,6 +37,10 @@ TARGET_POSTGRES_USER=your_username
 TARGET_POSTGRES_PASSWORD=your_password
 ```
 
+Note: dbt uses `DB_*` while Meltano uses `TARGET_POSTGRES_*`. Set `DB_NAME` and
+`TARGET_POSTGRES_DATABASE` to the same database if you want dbt to read what
+Meltano loads.
+
 Supabase users: use the values from Settings → Database → Connection string.
 Session pooler uses port 5432, and Transaction pooler uses port 6543.
 If you use the Transaction pooler, your host/port/user will look like:
@@ -116,11 +120,18 @@ set -a; source .env; set +a
    source venv/bin/activate 
    meltano run tap-rest-rickandmorty target-postgres
    ```
+   By default, Meltano uses the `dev` environment (`default_environment: dev`),
+   which will write to schemas like `dev_tap_rest_rickandmorty`. Use
+   `--environment=prod` if you want `prod_*` schemas.
+
    To run against prod schemas:
 
    ```bash
    meltano --environment=prod run tap-rest-rickandmorty target-postgres
    ```
+   dbt sources are configured for `prod_tap_rest_rickandmorty` in
+   `transform/models/staging/_sources.yml`, so use `--environment=prod`
+   when running the full pipeline locally.
 
 4. **Run Transformation (dev)**:
 
@@ -291,6 +302,12 @@ dbt run
 ### Meltano target-postgres config missing
 
 If you see "Required key is missing from config", ensure `TARGET_POSTGRES_*` are set or load `extraction/.env` before running Meltano.
+
+### Source schema not found
+
+If dbt errors with "source ... not found", check the schema in
+`transform/models/staging/_sources.yml` and make sure it matches the Meltano
+environment you used for extraction.
 
 ## Troubleshooting
 
