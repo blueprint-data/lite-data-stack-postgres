@@ -211,7 +211,13 @@ dbt build --defer --state prod-artifacts --select state:modified+
 
 ### Setting Up CI/CD
 
-You'll need to configure database credentials if you point the workflow at an external Postgres instance. The default workflow uses the built-in Postgres service.
+The workflow expects an external Postgres instance and reads credentials from GitHub Actions secrets:
+
+- `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
+- `DBT_USER` (used for sandbox schema naming in dev targets)
+- `DB_SSLMODE` (for example: `require` for Supabase)
+
+If your database restricts inbound connections, allow GitHub Actions runner IPs for the region or use a publicly reachable endpoint.
 
 ## Development
 
