@@ -16,6 +16,11 @@ jobs:
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DBT_USER: ${{ secrets.DBT_USER }}
       DB_SSLMODE: ${{ secrets.DB_SSLMODE }}
+      TARGET_POSTGRES_HOST: ${{ secrets.DB_HOST }}
+      TARGET_POSTGRES_PORT: ${{ secrets.DB_PORT }}
+      TARGET_POSTGRES_DBNAME: ${{ secrets.DB_NAME }}
+      TARGET_POSTGRES_USER: ${{ secrets.DB_USER }}
+      TARGET_POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
       CI: true
       DBT_CI_PR_NUMBER: scheduled
     steps:

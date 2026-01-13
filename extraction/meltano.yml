@@ -17,11 +17,11 @@ plugins:
       variant: transferwise
       pip_url: pipelinewise-target-postgres
       config:
-        host: ${DB_HOST}
-        port: ${DB_PORT}
-        user: ${DB_USER}
-        password: ${DB_PASSWORD}
-        dbname: ${DB_NAME}
+        host: ${TARGET_POSTGRES_HOST}
+        port: ${TARGET_POSTGRES_PORT}
+        user: ${TARGET_POSTGRES_USER}
+        password: ${TARGET_POSTGRES_PASSWORD}
+        dbname: ${TARGET_POSTGRES_DBNAME}
         default_target_schema: raw
         add_record_metadata: true
         ssl: true
