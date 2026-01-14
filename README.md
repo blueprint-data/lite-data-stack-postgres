@@ -1,368 +1,331 @@
 # lite-data-stack-postgres
 
-A Lite Data Stack template powered by Meltano (extraction) and dbt (transformation) with PostgreSQL storage, preconfigured to ingest the Rick and Morty API end to end.
+## What is this?
 
-## Quick Start
+This template creates a simple data pipeline: it extracts data from a public API (Rick & Morty), stores it in PostgreSQL, and then transforms it into ready-to-use tables. You do not need to know Meltano or dbt to use it; the README guides you step by step.
 
-### Prerequisites
+It is aimed at small teams or projects starting their first stack: quick to spin up, easy to understand, and with CI/CD ready to automate tests and documentation.
 
-- Python 3.11+
-- PostgreSQL database
-- Git
-- uv (Python package manager)
+## What it includes
 
-### Environment Variables
+- Extraction with Meltano (API -> Postgres)
+- Transformation with dbt (staging -> marts)
+- Models and columns documented in YAML
+- CI/CD workflows and dbt docs on GitHub Pages
 
-Create a `.env` file in the root directory (or start from `.env.example`):
+## Quick start (Happy Path)
+
+Minimum requirements:
+- [req] Python 3.11+
+- [req] Git
+- [req] A Postgres database (local or Supabase)
+
+1) [DB] Get a database
+
+If you use local Postgres, create an empty database. If you use Supabase, get the connection details from Settings -> Database.
+
+2) [CFG] Configure variables
 
 ```bash
-# Database Configuration ( PostgreSQL )
-# Use the host only (no https:// or postgresql://)
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=your_database
-DB_USER=your_username
-DB_PASSWORD=your_password
-DB_SSLMODE=require
-
-# Used to name dev schemas: SANDBOX_<USER>
-DBT_USER=yourname
-
-# Meltano loader (target-postgres)
-# These can mirror DB_* or be set in extraction/.env
-TARGET_POSTGRES_HOST=localhost
-TARGET_POSTGRES_PORT=5432
-TARGET_POSTGRES_DATABASE=your_database
-TARGET_POSTGRES_USER=your_username
-TARGET_POSTGRES_PASSWORD=your_password
+cd PROJECT_NAME
+cp .env.example .env
 ```
 
-Note: dbt uses `DB_*` while Meltano uses `TARGET_POSTGRES_*`. Set `DB_NAME` and
-`TARGET_POSTGRES_DATABASE` to the same database if you want dbt to read what
-Meltano loads.
+Edit `.env` with your credentials. Minimal example:
 
-Supabase users: use the values from Settings → Database → Connection string.
-Session pooler uses port 5432, and Transaction pooler uses port 6543.
-If you use the Transaction pooler, your host/port/user will look like:
+```bash
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=lite_data_stack
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_SSLMODE=require
+
+DBT_USER=local
+
+TARGET_POSTGRES_HOST=localhost
+TARGET_POSTGRES_PORT=5432
+TARGET_POSTGRES_DATABASE=lite_data_stack
+TARGET_POSTGRES_USER=postgres
+TARGET_POSTGRES_PASSWORD=postgres
+```
+
+> [!] WARNING: dbt uses `DB_*` and Meltano uses `TARGET_POSTGRES_*`. For the first run, point both to the same Postgres.
+
+Quick Supabase example (pooler):
 
 ```bash
 DB_HOST=aws-1-us-east-1.pooler.supabase.com
 DB_PORT=6543
+DB_NAME=postgres
 DB_USER=postgres.<project-ref>
+DB_PASSWORD=tu_password
+DB_SSLMODE=require
 ```
 
-For local extraction, you can copy `extraction/.env.example` to `extraction/.env` and load it with:
+3) [EXT] Run extraction once (Meltano)
 
 ```bash
 cd extraction
-set -a; source .env; set +a
+./scripts/setup-local.sh
+source venv/bin/activate
+set -a; source ../.env; set +a
+meltano --environment=prod run tap-rest-rickandmorty target-postgres
 ```
 
-### Setup
+> [i] INFO: The script creates the venv and installs dependencies. When it finishes, activate the venv in your shell to run Meltano.
+> [!] WARNING: dbt sources point to the `prod_tap_rest_rickandmorty` schema. That is why the first Meltano run must load into prod.
 
-1. **Set up Extraction (Meltano)**:
-
-   ```bash
-   cd extraction
-   ./scripts/setup-local.sh
-   ```
-
-   This script will:
-   - Check Python version (>=3.11)
-   - Create a virtual environment
-   - Install uv and dependencies via `pyproject.toml`
-   - Initialize Meltano
-
-2. **Set up Transform (dbt)**:
-
-   ```bash
-   cd transform
-   ./scripts/setup-local.sh
-   ```
-
-   This script will:
-   - Check Python version (>=3.11)
-   - Create a virtual environment
-   - Install uv and dependencies via `pyproject.toml`
-
-3. **Configure dbt**:
-
-   ```bash
-   cd transform
-   cp profiles.yml.example profiles.yml
-   ```
-
-4. **Set DBT_USER for development (if not set in `.env`)**:
-
-   ```bash
-   export DBT_USER="yourname"
-   ```
-
-### Running
-
-1. **Load environment variables**:
-
-   ```bash
-   set -a; source .env; set +a
-   ```
-
-2. **Review the extractor setup** in `extraction/meltano.yml`:
-   - `tap-rest-rickandmorty` pulls from the public API
-   - `target-postgres` loads into `${MELTANO_ENVIRONMENT}_${MELTANO_EXTRACTOR_NAMESPACE}`
-     (for example: `dev_tap_rest_rickandmorty`, `prod_tap_rest_rickandmorty`)
-
-3. **Run Extraction**:
-
-   ```bash
-   cd extraction
-   set -a; source .env; set +a
-   ./scripts/setup-local.sh
-   source venv/bin/activate 
-   meltano run tap-rest-rickandmorty target-postgres
-   ```
-   By default, Meltano uses the `dev` environment (`default_environment: dev`),
-   which will write to schemas like `dev_tap_rest_rickandmorty`. Use
-   `--environment=prod` if you want `prod_*` schemas.
-
-   To run against prod schemas:
-
-   ```bash
-   meltano --environment=prod run tap-rest-rickandmorty target-postgres
-   ```
-   dbt sources are configured for `prod_tap_rest_rickandmorty` in
-   `transform/models/staging/_sources.yml`, so use `--environment=prod`
-   when running the full pipeline locally.
-
-4. **Run Transformation (dev)**:
-
-   ```bash
-   cd transform
-   ./scripts/setup-local.sh
-   source venv/bin/activate 
-   dbt deps
-   dbt run
-   dbt test
-   ```
-
-5. **Run Transformation (prod schemas)**:
-
-   ```bash
-   dbt run --target prod
-   dbt test --target prod
-   ```
-
-### Docs
-
-Generate and serve dbt docs for the active target:
+4) [DBT] Run transform and build models
 
 ```bash
-dbt docs generate
-dbt docs serve
+cd ../transform
+./scripts/setup-local.sh
+source venv/bin/activate
+cp profiles.yml.example profiles.yml
+set -a; source ../.env; set +a
+export DBT_PROFILES_DIR=.
+dbt deps
+dbt build --target prod
 ```
 
-For prod schemas:
+> [i] INFO: `dbt build` runs models and tests, so it is used in PR/deploy.
+> [i] INFO: Every time you change a model, run `dbt build` again (or a selective build).
+
+5) [SQL] See results in the DB
+
+```sql
+select * from marts.character_status limit 10;
+select * from marts.episode_summary limit 10;
+select * from marts.location_summary limit 10;
+```
+
+6) [DOCS] Generate dbt docs (optional)
 
 ```bash
+cd ../transform
+set -a; source ../.env; set +a
+export DBT_PROFILES_DIR=.
 dbt docs generate --target prod
 dbt docs serve --target prod
 ```
 
-## Project Structure
+Opens at: http://localhost:8080
+
+## Next steps
+
+1) View dbt docs to explore the DAG and columns.
+2) Add a new model and document it.
+3) Change the data source and adapt staging.
+
+## Understanding the project
+
+### Data flow
 
 ```
-lite-data-stack-postgres/
-├── extraction/                  # Meltano project for data extraction
-│   ├── meltano.yml              # Rick & Morty REST tap + Postgres target
-│   ├── scripts/
-│   │   └── setup-local.sh       # Helper script for setup
-│   └── venv/                    # Python virtual environment
-├── transform/                   # dbt project for data transformation
-│   ├── dbt_project.yml          # dbt configuration
-│   ├── packages.yml             # dbt packages
-│   ├── profiles.yml.example     # Database profiles template
-│   ├── macros/
-│   │   └── generate_schema_name.sql  # Schema naming with sandbox support
-│   ├── models/
-│   │   ├── staging/             # Staging models
-│   │   └── production/
-│   │       └── marts/           # Production models
-│   ├── scripts/
-│   │   └── setup-local.sh       # Helper script for setup
-│   ├── seeds/                   # Seed data
-│   ├── analyses/                # Analysis queries
-│   ├── snapshots/               # Snapshots
-│   └── tests/                   # Tests
-├── .github/
-│   └── workflows/
-│       └── data-pipeline.yml    # End-to-end ETL workflow
-├── .env.example                 # Environment variable template
-├── pyproject.toml               # Python dependencies with uv support
-└── README.md
+Rick & Morty API
+  -> Meltano (tap-rest-rickandmorty + target-postgres)
+  -> Postgres: schema prod_tap_rest_rickandmorty (raw)
+  -> dbt staging: schema stg (stg_*)
+  -> dbt marts: schema marts (final models)
 ```
 
-## Configuration
+### Staging vs marts
 
-### Extraction (Meltano)
+- Staging cleans and normalizes raw data. It keeps consistent names and correct types.
+- Marts are final models ready for analysis or BI.
 
-This template already includes:
+Real example from this project:
+- `stg_characters` -> `character_status`
 
-- `tap-rest-rickandmorty` as the extractor
-- `target-postgres` as the loader
-- Loads data into `${MELTANO_ENVIRONMENT}_${MELTANO_EXTRACTOR_NAMESPACE}`
+### Table of models and key columns
 
-### Transform (dbt)
+All column documentation lives in:
+- `transform/models/staging/schema.yml`
+- `transform/models/production/marts/*.yml`
 
-#### Environments
+### Useful query examples
 
-- **Prod/CI**: Uses configured schema names (`stg`, `marts`; `int` if added)
-- **Dev**: Uses sandbox schemas (`SANDBOX_<USER>`)
+```sql
+-- Top 5 episodes with most characters
+select episode_code, name, character_count
+from marts.episode_summary
+order by character_count desc
+limit 5;
 
-#### Sandbox Strategy
+-- Top 5 locations with most residents
+select name, location_type, resident_count
+from marts.location_summary
+order by resident_count desc
+limit 5;
 
-The project uses sandbox schemas for development:
+-- Character distribution by status
+select status, character_count
+from marts.character_status
+order by character_count desc;
+```
 
-- **Local development**: Each developer gets `SANDBOX_<USER>` schema
-- **Prod**: Direct schema access with `persist_docs` enabled
+### Environments (dev, ci, prod)
 
-#### Defer Support
+- dev: default target. Writes to `SANDBOX_<DBT_USER>`. Ideal for local development.
+- ci: optional target with fixed schema `analytics_ci` if you need it in your own pipelines.
+- prod: writes to `stg` and `marts` schemas. Used for deploy and docs.
 
-When running with `--defer` flag, dbt will use production schemas for unmodified models:
+If you do not pass `--target prod`, dbt uses the default target (dev).
+
+> [!] WARNING: For `dev`, you need `DBT_USER`. If you do not set it, dbt fails in the on-run-start hook.
+
+### Why we use dbt build (and not dbt run)
+
+- `dbt run` only executes models.
+- `dbt build` executes models and tests (and snapshots/seeds if they exist).
+- In PR and deploy we use `dbt build` to validate everything passes.
+
+### Modeling conventions
+
+- Staging always uses the `stg_` prefix.
+- Marts have no prefix (e.g. `character_status`).
+- Each production model has its own `.yml` file with columns and tests.
+- Use `ref()` for dependencies between models.
+
+## Local development
+
+### Work in your sandbox (dev)
 
 ```bash
-dbt build --defer --state prod-artifacts --select state:modified+
+export DBT_USER=tu_usuario
+cd transform
+set -a; source ../.env; set +a
+export DBT_PROFILES_DIR=.
+dbt build
 ```
 
-## CI/CD
+> [i] INFO: Raw data stays in `prod_tap_rest_rickandmorty`, but your models are created in `SANDBOX_<DBT_USER>`.
+> [i] INFO: If you modify models or YAML, run `dbt build` again.
+
+### Add a new model
+
+1) Create the SQL in `transform/models/staging` or `transform/models/production/marts`.
+2) Create the model YAML with descriptions for all columns and basic tests.
+3) Run a selective build.
+
+```bash
+dbt build --select <nombre_del_modelo>
+```
+
+### Change the data source
+
+1) Edit `extraction/meltano.yml` to point to your new extractor.
+2) Update `transform/models/staging/_sources.yml` with the new schema and tables.
+3) Rewrite the staging models to map the new columns.
+
+## Quick repo layout
+
+- `extraction/`: Meltano project
+- `transform/`: dbt project
+- `.github/workflows/`: CI/CD
+- `.env.example`: variables template
+
+<details>
+<summary>CI/CD Setup</summary>
+
+### Required GitHub secrets
+
+Configure these secrets in your repo:
+- `DB_HOST`
+- `DB_PORT`
+- `DB_NAME`
+- `DB_USER`
+- `DB_PASSWORD`
+- `DB_SSLMODE`
+- `DBT_USER` (for sandbox schemas)
+
+Optional:
+- `DBT_MANIFEST_URL` for custom slim CI
 
 ### Workflows
 
-1. **Data Pipeline** (`.github/workflows/data-pipeline.yml`)
-   - Scheduled runs (configurable cron)
-   - Manual dispatch
-   - Runs extraction followed by transformation
-2. **dbt CD + Docs** (`.github/workflows/dbt-cd-docs.yml`)
-   - PR: `dbt parse` validation
-   - Push to `main`: `dbt run --target prod`, `dbt test --target prod`
-   - Publishes dbt docs to GitHub Pages
-3. **dbt PR CI** (`.github/workflows/dbt-pr-ci.yml`)
-   - Lints changed models with SQLFluff (dbt templater)
-   - Runs `dbt build` in a sandbox schema
-   - Uses the production `manifest.json` for slim CI when available
+- `data-pipeline.yml`: schedule + manual. Runs extraction and then the dbt run (no tests).
+- `dbt-pr-ci.yml`: on PR. Runs dbt build in sandbox and lints with SQLFluff.
+- `dbt-cd-docs.yml`: on push to `main`. Runs dbt build in prod and publishes docs.
 
-### Setting Up CI/CD
+> [i] INFO: PR and deploy use `dbt build`; the scheduled pipeline uses only `dbt run`.
 
-The workflow expects an external Postgres instance and reads credentials from GitHub Actions secrets:
+### Slim CI (prod manifest)
 
-- `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
-- `DBT_USER` (used for sandbox schema naming in dev targets)
-- `DB_SSLMODE` (for example: `require` for Supabase)
+- The PR workflow tries to download `manifest.json` from prod.
+- With `state:modified+` and `--defer`, dbt runs only what changed and uses prod for everything else.
+- If there is no manifest, it runs a full build.
 
-The workflow maps these `DB_*` secrets into the `TARGET_POSTGRES_*` variables that Meltano uses.
+### SQLFluff
 
-If your database restricts inbound connections, allow GitHub Actions runner IPs for the region or use a publicly reachable endpoint.
+SQLFluff is a SQL linter. It is used to:
+- keep consistent style in models
+- catch basic issues before running dbt
 
-To publish dbt docs, enable GitHub Pages with **Source: GitHub Actions** in the
-repository settings.
+In PR, only modified SQL models are linted.
 
-The PR workflow pulls the production manifest from GitHub Pages at:
-`https://<owner>.github.io/<repo>/manifest.json`. Override this by setting
-`DBT_MANIFEST_URL` as a repository secret if you use a custom domain.
+### Enable GitHub Pages
 
-## Development
+1) Go to Settings -> Pages.
+2) In Source, choose GitHub Actions.
+3) After a push to `main`, the docs are published.
 
-### Local Development
+</details>
 
-1. Install dependencies via setup scripts
-2. Set `DBT_USER` environment variable
-3. Work in your sandbox schema: `SANDBOX_<USER>`
-4. Test changes before committing
+<details>
+<summary>Common troubleshooting</summary>
 
-### Using Defer
-
-To test changes against production data:
+Error: Env var required but not provided: DB_HOST
 
 ```bash
-# Download production manifest
-# (automatically done in CI/CD)
-
-# Run with defer
-dbt build --defer --state prod-artifacts --select state:modified+
+set -a; source .env; set +a
 ```
 
-### Best Practices
-
-- Always run in sandbox schemas for development
-- Use `--defer` to test against production data
-- Test in PR before merging to main
-- Keep staging models as views for easy iteration
-- Document models with `persist_docs` enabled
-
-## Testing
-
-### Test Extraction
+If you are inside `transform` or `extraction`:
 
 ```bash
-cd extraction
-meltano test
+set -a; source ../.env; set +a
 ```
 
-### Test Transform
+Error: source: no such file or directory: .env
 
 ```bash
-cd transform
-dbt test
-dbt run
+set -a; source ../.env; set +a
 ```
 
-### Meltano target-postgres config missing
+Error: Source schema not found
 
-If you see "Required key is missing from config", ensure `TARGET_POSTGRES_*` are set or load `extraction/.env` before running Meltano.
-
-### Source schema not found
-
-If dbt errors with "source ... not found", check the schema in
-`transform/models/staging/_sources.yml` and make sure it matches the Meltano
-environment you used for extraction.
-
-## Troubleshooting
-
-### DBT_USER not set
-
-For development mode, ensure `DBT_USER` is set:
+Run extraction in prod (because sources point to `prod_tap_rest_rickandmorty`):
 
 ```bash
-export DBT_USER="yourname"
+meltano --environment=prod run tap-rest-rickandmorty target-postgres
 ```
 
-### Sandbox schema issues
+Error: Required key is missing from config (Meltano)
 
-If the sandbox schema doesn't exist:
+Make sure `TARGET_POSTGRES_*` are set in `.env` and reload:
 
-- Local: Check database permissions
-- CI: Check cloud provider authentication
+```bash
+set -a; source .env; set +a
+```
 
-### Defer not working
+Error: DBT_USER environment variable not set
 
-Ensure:
+```bash
+export DBT_USER=tu_usuario
+```
 
-- Production manifest is downloaded
-- State directory is correctly specified
-- `--defer` flag is used
+</details>
 
-## Resources
+<details>
+<summary>Template customization</summary>
 
-- [Meltano Documentation](https://docs.meltano.com/)
-- [dbt Documentation](https://docs.getdbt.com/)
-- [PostgreSQL Documentation](https://www.postgres.com/docs)
-- [uv Documentation](https://github.com/astral-sh/uv)
+- For another API: replace the tap in `extraction/meltano.yml`.
+- For another database: adjust `TARGET_POSTGRES_*` and `DB_*` in `.env`.
+- For new models: add SQL in `transform/models/production/marts` and its YAML next to it.
 
-## Contributing
-
-1. Create a feature branch
-2. Make your changes
-3. Test in your sandbox schema
-4. Submit a pull request
-5. Run the pipeline end to end before merging
+</details>
 
 ## License
 
