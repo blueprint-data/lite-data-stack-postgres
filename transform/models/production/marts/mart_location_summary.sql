@@ -6,7 +6,7 @@ WITH locations AS (
 SELECT
     location_id,
     name,
-    type AS location_type,
+    location_type,
     dimension,
     resident_count
 FROM locations
