@@ -1,12 +1,12 @@
-with locations as (
-    select *
-    from {{ ref('stg_locations') }}
+WITH locations AS (
+    SELECT *
+    FROM {{ ref('stg_locations') }}
 )
 
-select
+SELECT
     location_id,
     name,
-    type,
+    location_type,
     dimension,
     resident_count
-from locations
+FROM locations

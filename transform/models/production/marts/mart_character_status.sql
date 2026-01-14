@@ -1,10 +1,10 @@
-with characters as (
-    select *
-    from {{ ref('stg_characters') }}
+WITH characters AS (
+    SELECT *
+    FROM {{ ref('stg_characters') }}
 )
 
-select
-    coalesce(status, 'unknown') as status,
-    count(*) as character_count
-from characters
-group by status
+SELECT
+    coalesce(status, 'unknown') AS status,
+    count(*) AS character_count
+FROM characters
+GROUP BY status
