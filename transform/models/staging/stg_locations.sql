@@ -9,6 +9,6 @@ SELECT
     dimension,
     url AS location_url,
     created::timestamptz AS created_at,
-    nullif(type, '') AS type,
+    nullif(type, '') AS location_type,
     coalesce(jsonb_array_length(residents::jsonb), 0) AS resident_count
 FROM source
