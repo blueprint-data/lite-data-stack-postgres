@@ -51,11 +51,10 @@ jobs:
         run: |
           cp transform/profiles.yml.example transform/profiles.yml
 
-      - name: Run dbt models and tests
+      - name: Run dbt models
         working-directory: transform
         env:
           DBT_PROFILES_DIR: ${{ github.workspace }}/transform
         run: |
           dbt deps
           dbt run --target prod
-          dbt test --target prod

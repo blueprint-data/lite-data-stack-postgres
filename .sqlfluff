@@ -1,5 +1,5 @@
 [sqlfluff]
-# Aqui cambiamos el dialecto a postgres como pediste
+
 dialect = postgres
 templater = jinja
 sql_file_exts = .sql
