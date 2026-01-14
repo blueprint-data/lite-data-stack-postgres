@@ -1,14 +1,14 @@
-with source as (
-    select *
-    from {{ source('rick_and_morty', 'locations') }}
+WITH source AS (
+    SELECT *
+    FROM {{ source('rick_and_morty', 'locations') }}
 )
 
-select
-    id::int as location_id,
+SELECT
+    id::int AS location_id,
     name,
-    nullif(type, '') as type,
     dimension,
-    url as location_url,
-    created::timestamptz as created_at,
-    coalesce(jsonb_array_length(residents::jsonb), 0) as resident_count
-from source
+    url AS location_url,
+    created::timestamptz AS created_at,
+    nullif(type, '') AS type,
+    coalesce(jsonb_array_length(residents::jsonb), 0) AS resident_count
+FROM source

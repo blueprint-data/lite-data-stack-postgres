@@ -1,12 +1,12 @@
-with episodes as (
-    select *
-    from {{ ref('stg_episodes') }}
+WITH episodes AS (
+    SELECT *
+    FROM {{ ref('stg_episodes') }}
 )
 
-select
+SELECT
     episode_id,
     episode_code,
     name,
     air_date,
     character_count
-from episodes
+FROM episodes
